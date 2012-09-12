@@ -55,8 +55,6 @@ class Hex(object):
 none_player = Player(0, False, (0xff, 0xff, 0xff))
 player_one = PLAYER_CLASSES["C1" in sys.argv[1:]](1, color=(0x00, 0xB0, 0x00))
 player_two = PLAYER_CLASSES["C2" in sys.argv[1:] or "C" in sys.argv[1:]](2, color=(0xB0, 0x00, 0x00))
-player_one.other_player = player_two
-player_two.other_player = player_one
 
 fr = [int(a[1:]) for a in sys.argv[1:] if a.startswith("F")]
 if fr:
@@ -69,6 +67,11 @@ else:
 quiet = "Q" in sys.argv[1:]
 
 args = [a for a in sys.argv[1:] if not a in ["C","C1","C2", "Q"] and not a.startswith("F")]
+
+
+player_one.other_player = player_two
+player_two.other_player = player_one
+
 MAP_WIDTH = 16
 MAP_HEIGHT = 15
 if args:
@@ -796,4 +799,27 @@ def main():
 
  
 #this calls the 'main' function when this script is executed
-if __name__ == '__main__': main()
+if __name__ == '__main__': 
+    # -- Parameters
+    import sys
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("--human-1", action='store', default='human', dest='player_one')
+    parser.add_option("--dialect", action='store', default=None, dest='dialect')
+    parser.add_option("--verbose", action='store_true', default=True, dest='verbose')
+    parser.add_option("--quiet", action='store_false', default=True, dest='verbose')
+    options, args = parser.parse_args()
+    
+    dbName = args[0]
+    filename = args[1]
+    if args[2:]:
+        tableName = sys.argv[3]
+    else:
+        tableName = string.split(filename, '/')[-1]
+        tableName = string.split(tableName, '.')[0]
+    for c in "- ":
+        tableName = string.replace(tableName, c, "_")
+    status = csv2tbl(dbName, filename, tableName, verbose=options.verbose, charset=options.charset, dialect=options.dialect)
+    if status and not options.verbose:
+        print status
+main()

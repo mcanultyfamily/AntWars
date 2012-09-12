@@ -144,12 +144,13 @@ class GameState(object):
 class ChoosingGameState(GameState):
     def __init__(self, game, is_first=False, change_player=True):
         GameState.__init__(self, "CHOOSING", game, is_first, change_player)
+        self.soundClaimHex = pygame.mixer.Sound("taking a hex.wav")
 
     def handle_map_click(self, hex):
         if hex.owner!=none_player:
             self.game.log("ALREADY OWNED", hex)
             return self
-            
+        self.soundClaimHex.play()            
         hex.owner = self.game.current_player
         hex.count = 1
         self.game.changed_hexes.append(hex)        
@@ -190,12 +191,13 @@ class PlacingGameState(GameState):
             player_one.pool = player_two.pool = INITIAL_POOL_SIZE
             player_one.batch_size = player_two.batch_size = INITIAL_PLACING_BATCH_SIZE
         GameState.__init__(self, "PLACING", game, is_first, change_player)
+        self.soundPlaceHex = pygame.mixer.Sound("reinforcing a hex.wav")
         
     def handle_map_click(self, hex):
         if hex.owner!=self.game.current_player:
             self.game.log("OTHER PLAYER OWNED", hex)
             return self
-
+        self.soundPlaceHex.play()
         self.game.load_hex(hex)        
 
         if player_one.pool==0 and player_two.pool==0:
@@ -228,6 +230,10 @@ class ReinforcingGameState(GameState):
         if new_turn:
             self.game.log("*********** START TURN %s ****************" % self.game.turn)
 
+        self.soundClaimHex = pygame.mixer.Sound("taking a hex.wav")
+        self.soundAttackHex = pygame.mixer.Sound("attacking a hex.wav")
+        self.soundPlaceHex = pygame.mixer.Sound("reinforcing a hex.wav")
+
         hexes = self.game.get_hexes_owned_by(self.game.current_player)
         safe_hexes = self.game.get_safe_hexes(hexes)
         n = max(MIN_PER_TURN_BATCH_SIZE, len(hexes)+(len(safe_hexes)*2))
@@ -238,7 +244,7 @@ class ReinforcingGameState(GameState):
         if hex.owner!=self.game.current_player:
             self.game.log("OTHER PLAYER OWNED", hex)
             return self
-
+        self.soundPlaceHex.play()
         self.game.load_hex(hex)        
 
         if not self.game.current_player.pool:            
@@ -286,6 +292,7 @@ class AttackingGameState(GameState):
         assert(not is_first)
         game.num_attacks = NUM_ATTACKS_PER_TURN
         GameState.__init__(self, "ATTACKING", game, is_first, change_player)
+        self.soundAttackHex = pygame.mixer.Sound("attacking a hex.wav")
 
     def handle_sidebar_click(self):
         if not self.game.current_player.is_computer:
@@ -298,6 +305,7 @@ class AttackingGameState(GameState):
         if hex.owner==self.game.current_player:
             self.game.log("NOT OTHER PLAYER OWNED", hex)
             return self
+        self.soundAttackHex.play()
         target_points = hex.count
         attack_points = self.game.get_attack_points(hex, actual_attack=True)
         
@@ -699,7 +707,8 @@ class HexagonExample:
         
 
     def init(self):
-        pygame.init()    
+        pygame.init() 
+        pygame.mixer.init()   
         
         self.game = AntWarsGame()
 
